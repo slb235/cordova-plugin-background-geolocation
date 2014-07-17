@@ -2,8 +2,13 @@ package com.tenforwardconsulting.cordova.bgloc;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.tenforwardconsulting.cordova.bgloc.data.DAOFactory;
+import com.tenforwardconsulting.cordova.bgloc.data.LocationDAO;
 
 import android.app.Activity;
 import android.content.Context;
@@ -58,7 +63,19 @@ public class BackgroundGpsPlugin extends CordovaPlugin {
             isEnabled = false;
             result = true;
             activity.stopService(updateServiceIntent);
-            callbackContext.success();
+            
+            JSONArray arr = new JSONArray();
+            
+            // fetch and pass locations after stop
+            LocationDAO locationDAO = DAOFactory.createLocationDAO( cordova.getActivity().getApplicationContext() );
+            for (com.tenforwardconsulting.cordova.bgloc.data.Location savedLocation : locationDAO.getAllLocations()) {
+            	arr.put( savedLocation.toJSON() );
+                Log.d(TAG, "found location");
+                locationDAO.deleteLocation(savedLocation);
+            }
+            
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, arr));
+            
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             result = true;
             try {

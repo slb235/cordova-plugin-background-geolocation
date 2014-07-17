@@ -2,6 +2,9 @@ package com.tenforwardconsulting.cordova.bgloc.data;
 
 import java.util.Date;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.os.SystemClock;
 
 
@@ -49,6 +52,20 @@ public class Location {
 	}
 	public void setSpeed(String speed) {
 		this.speed = speed;
+	}
+	
+	public JSONObject toJSON() {
+		JSONObject json = new JSONObject();
+		try {
+			json.put("latitude", getLatitude());
+			json.put("longitude", getLongitude());
+			json.put("recorded_at", getRecordedAt());
+			json.put("accuracy", getAccuracy());
+			json.put("speed", getSpeed());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return json;
 	}
 	
 	public static Location fromAndroidLocation(android.location.Location originalLocation) {

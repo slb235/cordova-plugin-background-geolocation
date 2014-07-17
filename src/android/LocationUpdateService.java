@@ -403,12 +403,13 @@ public class LocationUpdateService extends Service implements LocationListener {
         lastLocation = location;
         persistLocation(location);
 
+        /*
         if (this.isNetworkConnected()) {
             Log.d(TAG, "Scheduling location network post");
             schedulePostLocations();
         } else {
             Log.d(TAG, "Network unavailable, waiting for now");
-        }
+        }*/
     }
     
     /**
