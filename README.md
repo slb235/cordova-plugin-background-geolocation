@@ -69,15 +69,20 @@ A full example could be:
     
     // BackgroundGeoLocation is highly configurable.
     bgGeo.configure(callbackFn, failureFn, {
-        url: 'http://only.for.android.com/update_location.json', // <-- only required for Android; ios allows javascript callbacks for your http
-        params: {                                               // HTTP POST params sent to your server when persisting locations.
+        url: 'http://only.for.android.com/update_location.json', // <-- Android ONLY:  your server url to send locations to 
+        params: {                                               //  <-- Android ONLY:  HTTP POST params sent to your server when persisting locations.
             auth_token: 'user_secret_auth_token',
             foo: 'bar'
+        },
+        headers: {                                              // <-- Android ONLY:  Optional HTTP headers sent to your configured #url when persisting locations
+            "X-Foo": "BAR"
         },
         desiredAccuracy: 10,
         stationaryRadius: 20,
         distanceFilter: 30,
-        debug: true // <-- enable this hear sounds for background-geolocation life-cycle.
+        debug: true, // <-- enable this hear sounds for background-geolocation life-cycle.
+        notificationTitle: 'Background tracking', // <-- android only, customize the title of the notification
+        notificationText: 'ENABLED' // <-- android only, customize the text of the notification
     });
 
     // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app.
@@ -101,7 +106,15 @@ When the plugin detects your user has moved beyond his stationary-region, it eng
 
 ## iOS and Android
 
-The plugin works with iOS and Android
+The plugin works with iOS and Android, however both platforms differ significantly in their interaction with server.
+
+### iOS
+
+*Only* on iOS will the plugin execute your configured ```callbackFn```.  You may manually POST the received ```GeoLocation``` to your server using standard XHR.  iOS ignores the @config params ```url```, ```params``` and ```headers```.
+
+### Android
+
+Android **WILL NOT** execute your configured ```callbackFn```.  The plugin manages sync-ing GeoLocations to your server automatically, using the configured ```url```, ```params``` and ```headers```.  Since the Android plugin must run as an autonomous Background Service, disconnected from your the main Android Activity (your foreground application), the background-geolocation plugin will continue to run, even if the foreground Activity is killed due to memory constraints.  This is why the Android plugin cannot execute the Javascript ```callbackFn```, since your app is not guaranteed to keep running -- syncing locations to the server must be handled by the plugin.
 
 ### Config
 
@@ -162,6 +175,23 @@ Compare now background-geolocation in the scope of a city.  In this image, the l
 
 ![distanceFilter at city scale](/distance-filter-city.png "distanceFilter at city scale")
 
+### Android Config
+
+#####`@param {String} url`
+
+The url which the Android plugin will persist background geolocation to
+
+#####`@param {Object} params`
+
+Optional HTTP params POSTed to your server when persisting locations (eg:  auth_token)
+
+#####`@param {Object} headers`
+
+Optional HTTP headers POSTed to your server when persisting locations
+
+#####`@param {String} notificationText/Title`
+
+On Android devices it is required to have a notification in the drawer because it's a "foreground service".  This gives it high priority, decreasing probability of OS killing it.  To customize the title and text of the notification, set these options.
 
 ## Licence ##
 

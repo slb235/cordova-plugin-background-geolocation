@@ -1,6 +1,7 @@
 package com.tenforwardconsulting.cordova.bgloc;
 
 import java.util.List;
+import java.util.Iterator;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -70,6 +71,7 @@ public class LocationUpdateService extends Service implements LocationListener {
     private long lastUpdateTime = 0l;
     
     private JSONObject params;
+    private JSONObject headers;
     private String url = "http://192.168.2.15:3000/users/current_location.json";
 
     private float stationaryRadius;
@@ -90,6 +92,8 @@ public class LocationUpdateService extends Service implements LocationListener {
     private Integer scaledDistanceFilter;
     private Integer locationTimeout = 30;
     private Boolean isDebugging;
+    private String notificationTitle = "Background checking";
+    private String notificationText = "ENABLED";
 
     private ToneGenerator toneGenerator;
     
@@ -161,6 +165,7 @@ public class LocationUpdateService extends Service implements LocationListener {
         if (intent != null) { 
             try {
                 params = new JSONObject(intent.getStringExtra("params"));
+                headers = new JSONObject(intent.getStringExtra("headers"));
             } catch (JSONException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -172,15 +177,17 @@ public class LocationUpdateService extends Service implements LocationListener {
             desiredAccuracy = Integer.parseInt(intent.getStringExtra("desiredAccuracy"));
             locationTimeout = Integer.parseInt(intent.getStringExtra("locationTimeout"));
             isDebugging = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
-            
+            notificationTitle = intent.getStringExtra("notificationTitle");
+            notificationText = intent.getStringExtra("notificationText");
+
             // Build a Notification required for running service in foreground.
             Intent main = new Intent(this, BackgroundGpsPlugin.class);
             main.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, main,  PendingIntent.FLAG_UPDATE_CURRENT);
 
             Notification.Builder builder = new Notification.Builder(this);
-            builder.setContentTitle("Background tracking");
-            builder.setContentText("ENABLED");
+            builder.setContentTitle(notificationTitle);
+            builder.setContentText(notificationText);
             builder.setSmallIcon(android.R.drawable.ic_menu_mylocation);
             builder.setContentIntent(pendingIntent);
             Notification notification;
@@ -194,12 +201,15 @@ public class LocationUpdateService extends Service implements LocationListener {
         }
         Log.i(TAG, "- url: " + url);
         Log.i(TAG, "- params: " + params.toString());
+        Log.i(TAG, "- headers: " + headers.toString());
         Log.i(TAG, "- stationaryRadius: "   + stationaryRadius);
         Log.i(TAG, "- distanceFilter: "     + distanceFilter);
         Log.i(TAG, "- desiredAccuracy: "    + desiredAccuracy);
         Log.i(TAG, "- locationTimeout: "    + locationTimeout);
         Log.i(TAG, "- isDebugging: "        + isDebugging);
-        
+        Log.i(TAG, "- notificationTitle: "  + notificationTitle);
+        Log.i(TAG, "- notificationText: "   + notificationText);
+
         this.setPace(false);
         
         //We want this service to continue running until it is explicitly stopped
@@ -664,6 +674,15 @@ public class LocationUpdateService extends Service implements LocationListener {
             request.setEntity(se);
             request.setHeader("Accept", "application/json");
             request.setHeader("Content-type", "application/json");
+
+            Iterator<String> headkeys = headers.keys();
+            while( headkeys.hasNext() ){
+		String headkey = headkeys.next();
+		if(headkey != null) {
+            		Log.d(TAG, "Adding Header: " + headkey + " : " + (String)headers.getString(headkey));
+            		request.setHeader(headkey, (String)headers.getString(headkey));
+		}
+            }
             Log.d(TAG, "Posting to " + request.getURI().toString());
             HttpResponse response = httpClient.execute(request);
             Log.i(TAG, "Response received: " + response.getStatusLine());
