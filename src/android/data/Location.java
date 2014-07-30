@@ -59,7 +59,7 @@ public class Location {
 		try {
 			json.put("latitude", getLatitude());
 			json.put("longitude", getLongitude());
-			json.put("recorded_at", getRecordedAt());
+			json.put("timestamp", getRecordedAt().getTime());
 			json.put("accuracy", getAccuracy());
 			json.put("speed", getSpeed());
 		} catch (JSONException e) {
